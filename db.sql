@@ -1,0 +1,25 @@
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) NOT NULL,
+  password VARCHAR(50) NOT NULL,
+  email VARCHAR(50) NOT NULL UNIQUE
+  deviceToken VARCHAR(100) NOT NULL UNIQUE,
+  removeNotifications BOOLEAN NOT NULL DEFAULT false
+);
+
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY,
+  body TEXT NOT NULL,
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  title VARCHAR(100) NOT NULL,
+  type VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE plantations (
+  id SERIAL PRIMARY KEY,
+  autowatering BOOLEAN NOT NULL,
+  healthy BOOLEAN NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  notificationsActive BOOLEAN NOT NULL,
+  readings JSONB NOT NULL
+);
