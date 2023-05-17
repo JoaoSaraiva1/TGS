@@ -24,3 +24,13 @@ CREATE TABLE plantations (
   active_notifications BOOLEAN NOT NULL DEFAULT false,
   readings JSON NOT NULL
 );
+
+CREATE TABLE readings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  plantation_id UUID NOT NULL REFERENCES plantations(id),
+  humidity FLOAT NOT NULL,
+  light FLOAT NOT NULL,
+  moisture FLOAT NOT NULL,
+  temperature FLOAT NOT NULL,
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

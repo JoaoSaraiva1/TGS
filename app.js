@@ -1,12 +1,11 @@
 const express = require('express');
 const json = require('express');
+const bodyParser = require('body-parser');
 const pool = require("./db");
 
 const app = express();
 
 app.use(json());
-
-//CRUD USERS
 
 // GET all users
 app.get('/users', async (req, res) => {
@@ -36,7 +35,7 @@ app.get('/users/:id', async (req, res) => {
 });
 
 // POST a new user
-app.post('/users', async (req, res) => {
+app.post('/newUser', async (req, res) => {
   const { username, password, email } = req.body;
   const id = uuidv4();
 
@@ -76,6 +75,7 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
+//Retreive the plantations associated with the user
 app.get('/users/:userId/plantations', async (req, res) => {
   const { userId } = req.params;
   const { user } = req;
@@ -93,6 +93,139 @@ app.get('/users/:userId/plantations', async (req, res) => {
   } catch (error) {
     console.error('Error fetching plantations:', error);
     res.status(500).send('Error fetching plantations');
+  }
+});
+
+// POST a new plantation
+app.post('/newPlantation', async (req, res) => {
+  try {
+    const { user_id, autowatering, healthy, name, active_notifications, readings } = req.body;
+
+    const query = 'INSERT INTO plantations (user_id, autowatering, healthy, name, active_notifications, readings) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
+    const values = [user_id, autowatering, healthy, name, active_notifications, readings];
+
+    const result = await pool.query(query, values);
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating plantation:', error);
+    res.status(500).json({ error: 'An error occurred while creating the plantation.' });
+  }
+});
+
+//GET a specific plantation
+app.get('/plantations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const query = 'SELECT * FROM plantations WHERE id = $1';
+    const result = await pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plantation not found.' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error retrieving plantation:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving the plantation.' });
+  }
+});
+
+//UPDATE a specific plantation
+app.put('/plantations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { autowatering, healthy, name, active_notifications, readings } = req.body;
+
+    const query = 'UPDATE plantations SET autowatering = $1, healthy = $2, name = $3, active_notifications = $4, readings = $5 WHERE id = $6 RETURNING *';
+    const values = [autowatering, healthy, name, active_notifications, readings, id];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plantation not found.' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating plantation:', error);
+    res.status(500).json({ error: 'An error occurred while updating the plantation.' });
+  }
+});
+
+//DELETE a specific plantation by id
+app.delete('/plantations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const query = 'DELETE FROM plantations WHERE id = $1 RETURNING *';
+    const result = await pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Plantation not found.' });
+    }
+
+    res.json({ message: 'Plantation deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting plantation:', error);
+    res.status(500).json({ error: 'An error occurred while deleting the plantation.' });
+  }
+});
+
+//POST a new plantation and associated reading
+app.post('/plantations', async (req, res) => {
+  try {
+    const { user_id, autowatering, healthy, name, active_notifications, readings } = req.body;
+
+    const createPlantationQuery = 'INSERT INTO plantations (user_id, autowatering, healthy, name, active_notifications) VALUES ($1, $2, $3, $4, $5) RETURNING id';
+    const plantationValues = [user_id, autowatering, healthy, name, active_notifications];
+
+    const plantationResult = await pool.query(createPlantationQuery, plantationValues);
+    const plantationId = plantationResult.rows[0].id;
+
+    const { humidity, light, moisture, temperature } = readings;
+
+    const createReadingQuery = 'INSERT INTO readings (plantation_id, humidity, light, moisture, temperature) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+    const readingValues = [plantationId, humidity, light, moisture, temperature];
+
+    const readingResult = await pool.query(createReadingQuery, readingValues);
+
+    res.json({ plantation: plantationResult.rows[0], reading: readingResult.rows[0] });
+  } catch (error) {
+    console.error('Error creating plantation and reading:', error);
+    res.status(500).json({ error: 'An error occurred while creating the plantation and reading.' });
+  }
+});
+
+//GET all readings for a specific plantation
+app.get('/plantations/:id/readings', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const query = 'SELECT * FROM readings WHERE plantation_id = $1';
+    const result = await pool.query(query, [id]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error retrieving readings:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving the readings.' });
+  }
+});
+
+//GET the readings between a certain interval of time
+app.get('/plantations/:id/readings', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { start_time, end_time } = req.query;
+
+    const query = 'SELECT * FROM readings WHERE plantation_id = $1 AND timestamp >= $2 AND timestamp <= $3';
+    const result = await pool.query(query, [id, start_time, end_time]);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error retrieving readings:', error);
+    res.status(500).json({ error: 'An error occurred while retrieving the readings.' });
   }
 });
 
