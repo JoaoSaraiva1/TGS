@@ -1,0 +1,5 @@
+postgresql-db 
+
+postgresqlUsername=postgres
+postgresqlPassword=tgs123
+postgresqlDatabase=farm-db

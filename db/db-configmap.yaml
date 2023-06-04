@@ -1,0 +1,15 @@
+apiVersion: v1
+# Kind for kubernets ConfigMap
+kind: ConfigMap
+metadata:
+  # Name your ConfigMap
+  name: db-secret-credentials
+  labels:
+    app: postgresdb
+data:
+  # User DB (testDB)
+  POSTGRES_DB: farm-db
+  # Db user (testUser)
+  POSTGRES_USER: joao
+  # Db password (testPassword)
+  POSTGRES_PASSWORD: tgs123

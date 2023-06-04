@@ -1,0 +1,1 @@
+kubectl exec -it postgresdb-8557bc6958-xp9mm -- psql -h localhost -U joao --password -p 5432 farm-db
