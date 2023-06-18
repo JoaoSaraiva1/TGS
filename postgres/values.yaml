@@ -1,0 +1,4 @@
+replicaCount: 3
+database:
+  host: postgresql
+  port: 5432

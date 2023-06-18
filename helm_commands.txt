@@ -2,4 +2,4 @@ helm repo add
 
 helm repo update
 
-helm install 
+helm install
